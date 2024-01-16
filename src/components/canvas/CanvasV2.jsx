@@ -15,6 +15,7 @@ import Square from '../shapes/Square';
 import { retry } from '@reduxjs/toolkit/query';
 import Triangle from '../shapes/Triangle';
 import Pentagon from '../shapes/Pentagon';
+import { Resizable } from 're-resizable';
 
 function CanvasV2({ width, height }) {
   // ------------------------------------------------------------------------------
@@ -35,6 +36,9 @@ function CanvasV2({ width, height }) {
 
   // const [isSpaceKeyHeld, setIsSpaceKeyHeld] = useState(false);
   const [isCanvasPan, setIsCanvasPan] = useState(false);
+
+  const [shapeWidth, setShapeWidth] = useState('250px');
+  const [shapeHeight, setShapeHeight] = useState('250px');
 
   // ------------------------------------------------------------------------------
   // function
@@ -147,7 +151,7 @@ function CanvasV2({ width, height }) {
 
   // new code
   const [elements, setElements] = React.useState([]);
-  console.log({elements})
+  console.log({ elements });
   // ------------------------------------------------------------------------------
   // render
   // ------------------------------------------------------------------------------
@@ -185,14 +189,15 @@ function CanvasV2({ width, height }) {
         <div className="relative inset-0">
           {/* main content */}
           <div
-            id='canvas-card'
+            id="canvas-card"
             style={{
+              resize: 'both',
               top: '0px',
               left: '0px',
               width: selectedCanvas?.width,
               height: selectedCanvas?.height
             }}
-            className="bg-white absolute text-green-50"
+            className="bg-white absolute"
             onDrop={(e) => {
               console.dir(e.dataTransfer.getData('shape'));
               setElements((elems) => [...elems, JSON.parse(e.dataTransfer.getData('shape'))]);
@@ -200,76 +205,75 @@ function CanvasV2({ width, height }) {
             onDragOver={(e) => e.preventDefault()}
           >
             {/* render all element */}
-            {selectedCanvas?.elements.map((element) => {
+            {/* {selectedCanvas?.elements.map((element) => {
               if (element.type == canvasElementType.text) {
                 return <CanvasText key={element.id} element={element} />;
               } else if (element.type == canvasElementType.circle) {
                 return <CanvasCircle key={element.id} element={element} />;
-              } 
-              else if (element.type == canvasElementType.line) {
+              } else if (element.type == canvasElementType.line) {
                 return <Line key={element.id} element={element} />;
-              }
-              else if (element.type == canvasElementType.square) {
-                return<Square key={element.id} element={element} />;
-              }
-              else if (element.type == canvasElementType.triangle) {
+              } else if (element.type == canvasElementType.square) {
+                return <Square key={element.id} element={element} />;
+              } else if (element.type == canvasElementType.triangle) {
                 return <Triangle key={element.id} element={element} />;
+              } else if (element.type == canvasElementType.pentagon) {
+                <Pentagon key={element.id} element={element} />;
               }
-              else if (element.type == canvasElementType.pentagon) {
-                < Pentagon key={element.id} element={element} />;
+            })} */}
+            {/* circle */}
+            {elements.map((element, idx) => {
+              if (element.type.toLowerCase() === 'square') {
+                return (
+                  <Resizable
+                    size={{ width: shapeWidth, height: shapeHeight }}
+                    onResizeStop={(e, direction, ref, d) => {
+                      setShapeWidth(shapeWidth + d.width);
+                      setShapeHeight(shapeHeight + d.height);
+                      // this.setState({
+                      //   width: this.state.width + d.width,
+                      //   height: this.state.height + d.height
+                      // });
+                    }}
+                    key={idx}
+                    // className="absolute top-0 right-0 bottom-0 left-0"
+                    style={{
+                      backgroundColor: ' #9ca3af',
+                      width: '250px',
+                      height: '250px',
+                      resize: 'vertical'
+                    }}
+                  ></Resizable>
+                );
+              } else if (element.type.toLowerCase() === 'triangle') {
+                return (
+                  <div
+                    key={idx}
+                    className=" flex justify-center items-baseline"
+                    style={{
+                      width: '250px',
+                      height: '250px',
+                      borderBottom: `${element.size}px solid #9ca3af`, // Set all three borders
+                      borderTop: '0', // Remove the bottom border
+                      borderLeft: `${element.size / 2}px solid transparent`, // Set the left border
+                      borderRight: `${element.size / 2}px solid transparent`
+                    }}
+                  />
+                );
+              } else if (element.type.toLowerCase() === 'pentagon') {
+                return (
+                  <div
+                    className="bg-gray-400"
+                    style={{
+                      clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
+                      width: '250px',
+                      height: '250px'
+                    }}
+                  ></div>
+                );
+              } else if (element.type.toLowerCase() === 'line') {
+                return <div className="w-full h-[5px] bg-gray-400"></div>;
               }
             })}
-            {/* circle */}
-            {
-              elements.map((element, idx) => {
-                if (element.type.toLowerCase() === 'square') {
-                  return (
-                    <div
-                      key={idx}
-                      // className='absolute top-0 right-0 bottom-0 left-0 '
-                      style={{
-                        backgroundColor: ' #9ca3af',
-                        width: '250px',
-                        height: '250px',
-                      }}
-                    ></div>
-                  );
-                }
-                else if (element.type.toLowerCase() === 'triangle') {
-                  return (
-                    <div
-                      key={idx}
-                      className=' flex justify-center items-baseline'
-                      style={{
-                        width: '0',
-                        height: '0',
-                        borderBottom: `${element.size}px solid #9ca3af`, // Set all three borders
-                        borderTop: '0', // Remove the bottom border
-                        borderLeft: `${element.size / 2}px solid transparent`, // Set the left border
-                        borderRight: `${element.size / 2}px solid transparent`,
-                      }}
-                    />
-                  );
-                }
-                else if (element.type.toLowerCase() === 'pentagon') {
-                  return (
-                    <div
-                      className='bg-gray-400'
-                      style={{
-                        clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
-                        width: '100%',
-                        height: '100%',
-                      }}
-                    ></div>
-                  );
-                }
-                else if (element.type.toLowerCase() === 'line') {
-                  return (
-                    <div className='w-full h-[5px] bg-gray-400'></div>
-                  );
-                }
-              })
-            }
             {/* <div
               style={{
                 top: 200 + 'px',

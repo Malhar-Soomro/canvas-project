@@ -10,6 +10,12 @@ const initialState = {
   },
   selectedSidebarItem: -1,
 
+  rightSidebar: {
+    width: 300,
+    open: false,
+    resizing: false
+  },
+
   isHeaderMenuOpen: false,
 
   isSpaceKeyHeld: false,
@@ -17,9 +23,12 @@ const initialState = {
   canvasContentWidth: -1,
   canvasContentHeight: -1,
   canvas: [],
-  selectedCanvas: {}
+  selectedCanvas: {},
 
-  // selectedElement: {}
+  draggingElement: {},
+
+  // selectedElement: {},
+  selectedElementID: -1
 };
 
 // ==============================|| slice ||============================== //
@@ -27,6 +36,9 @@ export const canvasSlice = createSlice({
   name: sliceKeys.canvas,
   initialState,
   reducers: {
+    // ------------------------------------------------------------------------------
+    // ui manage actions
+    // ------------------------------------------------------------------------------
     openSidebarDetail: (state, action) => {
       state.sidebarDetail.open = action.payload;
     },
@@ -43,27 +55,57 @@ export const canvasSlice = createSlice({
     openCanvasHeaderMenu: (state, action) => {
       state.isHeaderMenuOpen = action.payload;
     },
-
     setIsSpaceKeyHeld: (state, action) => {
       state.isSpaceKeyHeld = action.payload;
     },
+    updateRightSidebar: (state, action) => {
+      state.rightSidebar = action.payload;
+    },
+    setCanvasContentWidth: (state, action) => {
+      state.canvasContentWidth = action.payload;
+    },
+    setCanvasContentHeight: (state, action) => {
+      state.canvasContentHeight = action.payload;
+    },
 
+    // ------------------------------------------------------------------------------
+    // canvas manage actions
+    // ------------------------------------------------------------------------------
     addCanvas: (state, action) => {
+      // prepare new canvas object
       const newCanvas = {
-        id: nanoid(),
-        width: action.payload.width,
-        height: action.payload.height,
-        name: action.payload.name,
-        scale: action.payload.scale,
-        offset: action.payload.offset,
-        elements: []
+        id: nanoid(), // generate unique id
+        elements: [], // canvas element array
+        ...action.payload
       };
 
       state.selectedCanvas = newCanvas;
+      state.selectedElementID = -1;
       state.canvas.push(newCanvas);
+
+    },
+    setSelectedCanvas: (state, action) => {
+      state.selectedCanvas = action.payload;
+      state.selectedElementID = -1;
     },
     updateSelectedCanvas: (state, action) => {
       state.selectedCanvas = action.payload;
+      console.log('state.selectedCanvas :>> ', state.selectedCanvas);
+
+      state.canvas = state.canvas.map((canvas) => {
+        if (canvas.id == action.payload.id) {
+          canvas = action.payload;
+        }
+        return canvas;
+      });
+    },
+    updateCanvas: (state, action) => {
+      state.canvas = state.canvas.map((canvas) => {
+        if (canvas.id == action.payload.id) {
+          canvas = action.payload;
+        }
+        return canvas;
+      });
     },
     deleteCanvas: (state, action) => {
       state.canvas = state.canvas.filter((data) => {
@@ -94,14 +136,12 @@ export const canvasSlice = createSlice({
         return data;
       });
     },
-    setCanvasContentWidth: (state, action) => {
-      state.canvasContentWidth = action.payload;
-    },
-    setCanvasContentHeight: (state, action) => {
-      state.canvasContentHeight = action.payload;
-    },
 
+    // ------------------------------------------------------------------------------
+    // canvas element manage actions
+    // ------------------------------------------------------------------------------
     addCanvasElement: (state, action) => {
+      console.log('Adding canvas element:', action.payload);
       const newTextElement = {
         id: nanoid(),
         ...action.payload
@@ -120,6 +160,7 @@ export const canvasSlice = createSlice({
         return data;
       });
       console.log(state.canvas);
+      console.log('Updated Redux store state:', state);
     },
     updateCanvasElement: (state, action) => {
       state.selectedCanvas.elements = state.selectedCanvas.elements.map((element) => {
@@ -134,8 +175,10 @@ export const canvasSlice = createSlice({
         }
         return data;
       });
+      console.log('state.canvas :>> ', state.canvas);
     },
     setAllElementSelected: (state, action) => {
+      // console.log('select all element');
       state.selectedCanvas.elements = state.selectedCanvas.elements.map((element) => {
         element.selected = action.payload;
         return element;
@@ -147,6 +190,8 @@ export const canvasSlice = createSlice({
         }
         return data;
       });
+
+      state.selectedElementID = -1;
     },
     deleteSelectedElement: (state) => {
       state.selectedCanvas.elements = state.selectedCanvas.elements.filter((element) => {
@@ -161,6 +206,19 @@ export const canvasSlice = createSlice({
         }
         return data;
       });
+    },
+    setDraggingElement: (state, action) => {
+      state.draggingElement = action.payload;
+    },
+    setSelectedElementID: (state, action) => {
+      // const result = state.selectedCanvas.elements.find((element) => {
+      //   if (element.id == action.payload) return element;
+      // });
+      // console.log(result);
+      // state.selectedElement = result;
+
+      state.selectedElementID = action.payload;
+      state.rightSidebar.open = true;
     }
   }
 });
@@ -173,7 +231,10 @@ export const {
   openCanvasHeaderMenu,
   setIsSpaceKeyHeld,
 
+  updateRightSidebar,
+
   addCanvas,
+  setSelectedCanvas,
   updateSelectedCanvas,
   deleteCanvas,
   updateCanvasScale,
@@ -185,6 +246,8 @@ export const {
   addCanvasElement,
   updateCanvasElement,
   setAllElementSelected,
-  deleteSelectedElement
+  deleteSelectedElement,
+  setDraggingElement,
+  setSelectedElementID
 } = canvasSlice.actions;
 export const canvasReducer = canvasSlice.reducer;
