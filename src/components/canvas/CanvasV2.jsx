@@ -16,6 +16,7 @@ import { retry } from '@reduxjs/toolkit/query';
 import Triangle from '../shapes/Triangle';
 import Pentagon from '../shapes/Pentagon';
 import { Resizable } from 're-resizable';
+import Draggable from 'react-draggable';
 
 function CanvasV2({ width, height }) {
   // ------------------------------------------------------------------------------
@@ -152,6 +153,20 @@ function CanvasV2({ width, height }) {
   // new code
   const [elements, setElements] = React.useState([]);
   console.log({ elements });
+  const handleElementResize = (index, data = { width: undefined, height: undefined }) => {
+    const newElems = elements.slice(0);
+    const elem = newElems[index];
+    elem.width = data.width || elem.width;
+    elem.height = data.height || elem.height;
+    setElements(newElems);
+  };
+  const handleElementMove = (index, data = { x: undefined, y: undefined }) => {
+    const newElems = elements.slice(0);
+    const elem = newElems[index];
+    elem.x = data.x || elem.x;
+    elem.y = data.y || elem.y;
+    setElements(newElems);
+  };
   // ------------------------------------------------------------------------------
   // render
   // ------------------------------------------------------------------------------
@@ -186,26 +201,36 @@ function CanvasV2({ width, height }) {
         }}
         className="origin-center  absolute "
       >
-        <div className="relative inset-0">
-          {/* main content */}
-          <div
-            id="canvas-card"
-            style={{
-              resize: 'both',
-              top: '0px',
-              left: '0px',
-              width: selectedCanvas?.width,
-              height: selectedCanvas?.height
-            }}
-            className="bg-white absolute"
-            onDrop={(e) => {
-              console.dir(e.dataTransfer.getData('shape'));
-              setElements((elems) => [...elems, JSON.parse(e.dataTransfer.getData('shape'))]);
-            }}
-            onDragOver={(e) => e.preventDefault()}
-          >
-            {/* render all element */}
-            {/* {selectedCanvas?.elements.map((element) => {
+        {/* main content */}
+        <div
+          id="canvas-card"
+          style={{
+            resize: 'both',
+            top: '0px',
+            left: '0px',
+            width: selectedCanvas?.width,
+            height: selectedCanvas?.height
+          }}
+          className="bg-white absolute"
+          onDrop={(e) => {
+            console.dir(e.dataTransfer.getData('shape'));
+            setElements((elems) => {
+              const newElem = JSON.parse(e.dataTransfer.getData('shape') || '{}');
+              if (!newElem.type) return elems;
+              return [
+                ...elems,
+                {
+                  ...newElem,
+                  width: 150,
+                  height: newElem.type.toLowerCase() === 'line' ? 30 : 150
+                }
+              ];
+            });
+          }}
+          onDragOver={(e) => e.preventDefault()}
+        >
+          {/* render all element */}
+          {/* {selectedCanvas?.elements.map((element) => {
               if (element.type == canvasElementType.text) {
                 return <CanvasText key={element.id} element={element} />;
               } else if (element.type == canvasElementType.circle) {
@@ -220,69 +245,115 @@ function CanvasV2({ width, height }) {
                 <Pentagon key={element.id} element={element} />;
               }
             })} */}
-            {/* circle */}
-            {elements.map((element, idx) => {
-              if (element.type.toLowerCase() === 'square') {
-                return (
-                  <Resizable
-                    size={{ width: shapeWidth, height: shapeHeight }}
-                    onResizeStop={(e, direction, ref, d) => {
-                      setShapeWidth(shapeWidth + d.width);
-                      setShapeHeight(shapeHeight + d.height);
-                      // this.setState({
-                      //   width: this.state.width + d.width,
-                      //   height: this.state.height + d.height
-                      // });
+          {/* circle */}
+          {elements.map((element, idx) => {
+            if (element.type.toLowerCase() === 'square') {
+              return (
+                <Resizable
+                  size={{ width: element.width, height: element.height }}
+                  onResizeStop={(e, direction, ref, d) => {
+                    handleElementResize(idx, d);
+                  }}
+                  resizeRatio={1}
+                  lockAspectRatio
+                  key={idx}
+                  // className="absolute top-0 right-0 bottom-0 left-0"
+                  style={{
+                    // position: 'absolute',
+                    top: element.x || '5%',
+                    left: element.y || '5%'
+                  }}
+                >
+                  <div
+                    className="w-full h-full"
+                    style={{
+                      backgroundColor: ' #9ca3af'
                     }}
-                    key={idx}
-                    // className="absolute top-0 right-0 bottom-0 left-0"
+                    draggable
+                    onDragEnd={(e) => handleElementMove(idx, { x: e.clientX, y: e.clientY })}
+                  ></div>
+                </Resizable>
+              );
+            } else if (element.type.toLowerCase() === 'triangle') {
+              return (
+                <Resizable
+                  size={{ width: element.width, height: element.height }}
+                  onResizeStop={(e, direction, ref, d) => {
+                    handleElementResize(idx, d);
+                  }}
+                  key={idx}
+                  // className="absolute top-0 right-0 bottom-0 left-0"
+                  style={{
+                    // position: 'absolute',
+                    top: element.x || '5%',
+                    left: element.y || '5%'
+                  }}
+                >
+                  <div
+                    className="w-full h-full"
                     style={{
                       backgroundColor: ' #9ca3af',
-                      width: '250px',
-                      height: '250px',
-                      resize: 'vertical'
+                      clipPath: 'polygon(50% 0, 100% 100%, 0 100%)'
                     }}
-                  ></Resizable>
-                );
-              } else if (element.type.toLowerCase() === 'triangle') {
-                return (
-                  <div
-                    key={idx}
-                    className=" flex justify-center items-baseline"
-                    style={{
-                      width: '250px',
-                      height: '250px',
-                      borderBottom: `${element.size}px solid #9ca3af`, // Set all three borders
-                      borderTop: '0', // Remove the bottom border
-                      borderLeft: `${element.size / 2}px solid transparent`, // Set the left border
-                      borderRight: `${element.size / 2}px solid transparent`
-                    }}
-                  />
-                );
-              } else if (element.type.toLowerCase() === 'pentagon') {
-                return (
-                  <div
-                    className="bg-gray-400"
-                    style={{
-                      clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
-                      width: '250px',
-                      height: '250px'
-                    }}
+                    draggable
+                    onDragEnd={(e) => handleElementMove(idx, { x: e.clientX, y: e.clientY })}
                   ></div>
-                );
-              } else if (element.type.toLowerCase() === 'line') {
-                return <div className="w-full h-[5px] bg-gray-400"></div>;
-              }
-            })}
-            {/* <div
-              style={{
-                top: 200 + 'px',
-                left: 100 + 'px'
-              }}
-              className="w-[100px] h-[100px] bg-green-500 rounded-full absolute "
-            ></div> */}
-            {/* <CanvasText width={500} height={300} top={50} left={100} /> */}
-          </div>
+                </Resizable>
+              );
+            } else if (element.type.toLowerCase() === 'pentagon') {
+              return (
+                <Resizable
+                  size={{ width: element.width, height: element.height }}
+                  onResizeStop={(e, direction, ref, d) => {
+                    handleElementResize(idx, d);
+                  }}
+                  key={idx}
+                  // className="absolute top-0 right-0 bottom-0 left-0"
+                  style={{
+                    // position: 'absolute',
+                    top: element.x || '5%',
+                    left: element.y || '5%'
+                  }}
+                >
+                  <div
+                    className="w-full h-full"
+                    style={{
+                      backgroundColor: ' #9ca3af',
+                      clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)'
+                    }}
+                    draggable
+                    onDragEnd={(e) => handleElementMove(idx, { x: e.clientX, y: e.clientY })}
+                  ></div>
+                </Resizable>
+              );
+            } else if (element.type.toLowerCase() === 'line') {
+              return (
+                <Resizable
+                  size={{ width: element.width, height: element.height }}
+                  onResizeStop={(e, direction, ref, d) => {
+                    handleElementResize(idx, d);
+                  }}
+                  key={idx}
+                  // className="absolute top-0 right-0 bottom-0 left-0"
+                  style={{
+                    // position: 'absolute',
+                    top: element.x || '5%',
+                    left: element.y || '5%'
+                  }}
+                >
+                  <div
+                    className="w-full h-full"
+                    style={{
+                      borderBottom: '10px solid #9ca3af',
+                      borderBottomWidth: element.height
+                    }}
+                    draggable
+                    onDragEnd={(e) => handleElementMove(idx, { x: e.clientX, y: e.clientY })}
+                  ></div>
+                </Resizable>
+              );
+            }
+          })}
         </div>
       </div>
     </div>

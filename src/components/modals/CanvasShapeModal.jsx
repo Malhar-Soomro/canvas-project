@@ -22,7 +22,7 @@ const CanvasShapeModal = () => {
     { id: 1, type: 'Square', gridPosition: { row: 1, col: 1 }, size: fixedShapeSize, x: 0, y: 0 },
     { id: 2, type: 'Triangle', gridPosition: { row: 1, col: 2 }, size: fixedShapeSize, x: 0, y: 0 },
     { id: 3, type: 'Pentagon', gridPosition: { row: 2, col: 1 }, size: fixedShapeSize, x: 0, y: 0 },
-    { id: 4, type: 'Line', gridPosition: { row: 2, col: 2 }, size: fixedShapeSize, x: 0, y: 0 },
+    { id: 4, type: 'Line', gridPosition: { row: 2, col: 2 }, size: fixedShapeSize, x: 0, y: 0 }
   ]);
 
   // Step 1: Get the dispatch function
@@ -33,7 +33,7 @@ const CanvasShapeModal = () => {
     updatedShapes[index] = {
       ...updatedShapes[index],
       x: 0,
-      y: 0,
+      y: 0
     };
     setShapes(updatedShapes);
   };
@@ -50,36 +50,33 @@ const CanvasShapeModal = () => {
         ...draggedShape,
         x: draggedShape.x + x,
         y: draggedShape.y + y,
-        gridPosition: { row: newGridY + 1, col: newGridX + 1 },
+        gridPosition: { row: newGridY + 1, col: newGridX + 1 }
       };
 
       setShapes(updatedShapes);
 
       // -------------------------------------------------------------------
-       // Check for a significant move and create a canvas element
-       const movedSignificantly =
-       Math.abs(x) > 5 || Math.abs(y) > 5;
+      // Check for a significant move and create a canvas element
+      const movedSignificantly = Math.abs(x) > 5 || Math.abs(y) > 5;
 
-     if (movedSignificantly) {
-       const canvasElement = {
-         type: draggedShape.type,
-         width: fixedShapeSize,
-         height: fixedShapeSize,
-         top: draggedShape.y + y,
-         left: draggedShape.x + x,
-         selected: false,
-       };
+      if (movedSignificantly) {
+        const canvasElement = {
+          type: draggedShape.type,
+          width: fixedShapeSize,
+          height: fixedShapeSize,
+          top: draggedShape.y + y,
+          left: draggedShape.x + x,
+          selected: false
+        };
 
-       dispatch(addCanvasElement(canvasElement));
-     }
-// --------------------------------------------------------------------
-
+        dispatch(addCanvasElement(canvasElement));
+      }
+      // --------------------------------------------------------------------
 
       // Step 2: Dispatch the openSidebarDetail action
       dispatch(openSidebarDetail(true));
     }
   };
-
 
   const handleResize = (index, { size }) => {
     const updatedShapes = [...shapes];
@@ -100,10 +97,10 @@ const CanvasShapeModal = () => {
 
   return (
     <div className="w-full h-full bg-zinc-200 relative">
-      <h3 className='text-lg font-semibold text-gray-700 px-2 mt-3'>Line and Shapes</h3>
-      <hr className='border-gray-400 mx-2 mt-1' />
+      <h3 className="text-lg font-semibold text-gray-700 px-2 mt-3">Line and Shapes</h3>
+      <hr className="border-gray-400 mx-2 mt-1" />
       <div className="flex flex-wrap gap-3 px-2 py-5 ">
-        {shapes.map((shape, index) => (
+        {/* {shapes.map((shape, index) => (
           <Draggable
             key={shape.id}
             defaultPosition={{ x: 0, y: 0 }}
@@ -114,14 +111,14 @@ const CanvasShapeModal = () => {
             <Resizable
               width={fixedShapeSize}
               height={fixedShapeSize}
-              onResize={(e, data) => handleResize(index, data)}
+              // onResize={(e, data) => handleResize(index, data)}
               draggableOpts={{ grid: [10, 10] }}
             >
               <div
                 className={`shape-${shape.type.toLowerCase()} `}
                 style={{
-                  width: `${fixedShapeSize}px`,
-                  height: `${fixedShapeSize}px`,
+                  width: ${fixedShapeSize}px,
+                  height: ${fixedShapeSize}px,
                 }}
               >
                 {(() => {
@@ -141,6 +138,31 @@ const CanvasShapeModal = () => {
               </div>
             </Resizable>
           </Draggable>
+        ))} */}
+        {shapes.map((shape, idx) => (
+          <div
+            key={idx}
+            className={`shape-${shape.type.toLowerCase()} `}
+            style={{
+              width: `${fixedShapeSize}px`,
+              height: `${fixedShapeSize}px`
+            }}
+          >
+            {(() => {
+              switch (shape.type) {
+                case 'Square':
+                  return <Square element={shape} />;
+                case 'Triangle':
+                  return <Triangle element={shape} />;
+                case 'Pentagon':
+                  return <Pentagon element={shape} />;
+                case 'Line':
+                  return <Line element={shape} />;
+                default:
+                  return null;
+              }
+            })()}
+          </div>
         ))}
       </div>
     </div>
